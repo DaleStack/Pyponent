@@ -1,51 +1,33 @@
-import sqlite3
-import time
-from src.pyponent.core import VNode
-from src.pyponent.hooks import use_state, use_async_effect
+from src.pyponent.hooks import use_state
 from src.pyponent.web import run
+from src.pyponent.html import div, h1, input_, button, component
 
-# --- 1. Database Setup (Just for this example) ---
-def setup_database():
-    conn = sqlite3.connect("users.db")
-    conn.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, role TEXT)")
+def NameCard(props):
+    # State to hold what the user types
+    name, set_name = use_state("")
     
-    # Insert a dummy user if the table is empty
-    if conn.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 0:
-        conn.execute("INSERT INTO users (name, role) VALUES ('Grace Hopper', 'System Architect')")
-        conn.commit()
-    conn.close()
+    return div(
+        h1(f"Hello {name}!" if name else "What's your name?"),
+        input_(type="text", 
+               placeholder="Enter your name", 
+               value=name, onInput=lambda e: set_name(e.get("value", ""))
+        ),
+        button("Clear",
+               id="clear-btn",
+               onClick=lambda: set_name(""),
+               style="margin-left: 10px;"
+        ),
+
+        style="padding: 20px; border: 2px solid blue; border-radius: 8px; margin-top: 10px;"
+    )
 
 
-# --- 2. Your Pyponent Component ---
-def UserDashboard(props):
-    user, set_user = use_state(None)
-    is_loading, set_is_loading = use_state(True)
-
-    def fetch_from_db():
-        # Do heavy database stuff here
-        time.sleep(1) 
-        set_user({"name": "Grace Hopper", "role": "System Architect"})
-        set_is_loading(False)
-
-    # MAGIC! So clean.
-    use_async_effect(fetch_from_db, [])
-
-    if is_loading:
-        return VNode(tag="div", children=["Connecting to SQLite..."])
-
-    return VNode(tag="div", children=[f"Hello, {user['name']}"])
-
-# --- 4. The App Entry Point ---
 def App():
-    return VNode(
-        tag="div",
-        props={"style": "font-family: sans-serif; padding: 2rem;"},
-        children=[
-            VNode(tag="h1", children=["SQLite + Pyponent"]),
-            VNode(tag=UserDashboard)
-        ]
+    return div(
+        h1("Pyponent is GOOODDDD!!"),
+        component(NameCard),
+        style="font-family: sans-serif; padding: 2rem;"
     )
 
 if __name__ == "__main__":
-    setup_database()
     run(App, port=8000)
