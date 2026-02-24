@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Union
-
-# 1. Import the context variable instead of the old singleton
 from src.pyponent.hooks import dispatcher_context
 
 @dataclass
@@ -11,7 +9,6 @@ class VNode:
     children: List[Union['VNode', str]] = field(default_factory=list)
 
 def render_to_string(node: Union[VNode, str]) -> str:
-    """Recursively converts a VNode tree into an HTML string."""
     if isinstance(node, str):
         return node
     
@@ -22,36 +19,36 @@ def render_to_string(node: Union[VNode, str]) -> str:
             
     attr_str = " " + " ".join(html_attrs) if html_attrs else ""
     children_str = "".join(render_to_string(child) for child in node.children)
-    
     return f"<{node.tag}{attr_str}>{children_str}</{node.tag}>"
 
-def fire_event(node: Union['VNode', str], target_id: str, event_name: str) -> bool:
-    """Recursively searches the VNode tree for an ID and fires its event."""
+def fire_event(node: Union['VNode', str], target_id: str, event_name: str, event_data: dict = None) -> bool:
     if isinstance(node, str):
         return False
 
     if node.props.get("id") == target_id:
         handler = node.props.get(event_name)
         if handler:
-            handler() 
+            try:
+                # Pass the typing payload to the user's function
+                handler(event_data or {})
+            except TypeError:
+                # If they didn't ask for the payload (like a simple button click), run it empty
+                handler() 
             return True
         return False
 
     for child in node.children:
-        if fire_event(child, target_id, event_name):
+        if fire_event(child, target_id, event_name, event_data):
             return True
 
     return False
 
 def resolve_vdom(node: Union[VNode, str], path: str = "root") -> Union[VNode, str]:
-    """Recursively resolves component functions into pure HTML VNodes."""
     if isinstance(node, str):
         return node
 
     if callable(node.tag):
         node_id = f"{node.tag.__name__}_{path}"
-        
-        # 2. Fetch the specific dispatcher for THIS web request/tab
         current_dispatcher = dispatcher_context.get()
         current_dispatcher.prepare_render(node_id)
         
