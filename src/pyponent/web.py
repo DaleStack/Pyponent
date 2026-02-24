@@ -32,6 +32,19 @@ HTML_SHELL_TEMPLATE = """
                     }
                 }
             };
+
+            ws.onclose = function() {
+                console.log("Server disconnected. Waiting for hot reload...");
+                // Ping the server every 1 second. When it responds, refresh the page!
+                const interval = setInterval(function() {
+                    fetch("/").then(response => {
+                        if (response.ok) {
+                            clearInterval(interval);
+                            window.location.reload(); 
+                        }
+                    }).catch(e => { /* still waiting... */ });
+                }, 1000);
+            };
             
             const trackedEvents = ["click", "input", "change", "keydown", "submit"];
             trackedEvents.forEach(eventType => {
@@ -122,23 +135,34 @@ def setup_pyponent(app: FastAPI, root_component, title="Pyponent App", meta_tags
         except Exception:
             pass
 
-def run(target, title="Pyponent App", meta_tags="", host="0.0.0.0", port=8000):
+def run(target, title="Pyponent App", meta_tags="", host="0.0.0.0", port=8000, reload=False):
     """
     Runs the Pyponent server. 
-    'target' can be a Pyponent Component, OR a pre-configured FastAPI app.
     """
-    # 1. Did the user pass a custom FastAPI app, or just a UI component?
+    print(f"\n🚀 Starting Pyponent Web Server on http://localhost:{port}")
+    if reload:
+        print("🔄 Hot Reload is ENABLED. Watching for file changes...")
+    
+    # If target is a string (e.g., 'main:app'), we assume custom API routes are present
+    if isinstance(target, FastAPI) or (isinstance(target, str) and "app" in target):
+        print("🔗 Hybrid Mode: Custom API routes are active.")
+    print("-" * 50 + "\n")
+
+    # --- NEW: Hot Reload Execution ---
+    if reload:
+        if not isinstance(target, str):
+            raise ValueError(
+                "⚠️ To use reload=True, you must pass an import string (e.g., 'main:app') "
+                "so the reloader can locate your application."
+            )
+        uvicorn.run(target, host=host, port=port, reload=True)
+        return
+
+    # --- Standard Execution ---
     if isinstance(target, FastAPI):
         app = target
     else:
         app = FastAPI()
         setup_pyponent(app, root_component=target, title=title, meta_tags=meta_tags)
 
-    # 2. The Framework handles the Developer Experience (DX)!
-    print(f"\n🚀 Starting Pyponent Web Server on http://localhost:{port}")
-    if isinstance(target, FastAPI):
-        print("🔗 Hybrid Mode: Custom API routes are active.")
-    print("-" * 50 + "\n")
-    
-    # 3. Start the server
     uvicorn.run(app, host=host, port=port)
