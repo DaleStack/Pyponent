@@ -42,6 +42,8 @@ def _make_tag(tag_name):
     return tag_helper
 
 
+# Style Tag
+style_tag = _make_tag("style")
 
 # Generate standard HTML elements
 div = _make_tag("div")

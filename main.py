@@ -1,13 +1,14 @@
 from src.pyponent.hooks import use_state
 from src.pyponent.web import run
-from src.pyponent.html import div, h1, input_, button, component
+from src.pyponent.html import div, h1, input_, button, component, style_tag
 
 def NameCard(props):
     # State to hold what the user types
     name, set_name = use_state("")
     
     return div(
-        h1(f"Hello {name}!" if name else "What's your name?"),
+        style_tag(""".head-title { color: blue; font-size: 24px; }"""),
+        h1(f"Hello {name}!" if name else "What's your name?", class_name="head-title"),
         input_(id="name-input",
                type="text", 
                placeholder="Enter your name", 
@@ -27,7 +28,7 @@ def App():
     return div(
         h1("Pyponent is GOOODDDD!!"),
         component(NameCard),
-        style="font-family: sans-serif; padding: 2rem;"
+        style="font-family: sans-serif; padding: 2rem"
     )
 
 if __name__ == "__main__":
