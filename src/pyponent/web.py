@@ -8,12 +8,12 @@ import uvicorn
 from .core import VNode, render_to_string, fire_event, resolve_vdom
 from .hooks import Dispatcher, dispatcher_context 
 
-HTML_SHELL = """
+HTML_SHELL_TEMPLATE = """
 <!DOCTYPE html>
 <html>
     <head><title>Pyponent App</title></head>
     <body>
-        <div id="root">Connecting to Pyponent...</div>
+        <div id="root">{initial_html}</div>
         <script>
             const ws = new WebSocket("ws://" + window.location.host + "/ws");
             
@@ -54,7 +54,19 @@ def run(root_component, host="0.0.0.0", port=8000):
 
     @app.get("/")
     async def get():
-        return HTMLResponse(HTML_SHELL)
+        # 1. Create a temporary dispatcher just for this initial HTTP request
+        temp_dispatcher = Dispatcher()
+        dispatcher_context.set(temp_dispatcher)
+        
+        # 2. Render the application's first frame
+        root_vnode = VNode(tag=root_component)
+        resolved_vdom = resolve_vdom(root_vnode)
+        initial_html = render_to_string(resolved_vdom)
+        
+        # 3. FIX: Use .replace() instead of .format() to avoid curly brace collisions!
+        html_content = HTML_SHELL_TEMPLATE.replace("{initial_html}", initial_html)
+        
+        return HTMLResponse(html_content)
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
