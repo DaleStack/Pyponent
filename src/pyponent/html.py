@@ -1,5 +1,5 @@
 from .core import VNode
-
+import uuid
 
 def component(component_func, *children, **kwargs):
     """Helper to instantiate a custom Python function as a Pyponent component."""
@@ -7,23 +7,29 @@ def component(component_func, *children, **kwargs):
     return VNode(tag=component_func, props=props, children=list(children))
 
 def _make_tag(tag_name):
-    """Factory function to generate HTML tag helpers."""
     def tag_helper(*children, **kwargs):
         props = {}
+        has_event = False # Track if this element has an action
+        
         for key, value in kwargs.items():
-            # Handle Python reserved keywords! 
-            # We can't use `class=` in Python, so we use `class_name=` instead.
             if key == "class_name":
                 props["class"] = value
             elif key == "html_for":
                 props["for"] = value
-            # Convert underscores to hyphens (e.g., data_id -> data-id)
             elif key.startswith("data_") or key.startswith("aria_"):
                 props[key.replace("_", "-")] = value
             else:
                 props[key] = value
                 
-        # Automatically unpack lists if a user passes a list of children
+            # Check if the user attached an event!
+            if key.startswith("on"):
+                has_event = True
+                
+        # --- THE MAGIC FIX ---
+        # If there is an event but no ID, generate a secure random one!
+        if has_event and "id" not in props:
+            props["id"] = f"pyponent-{uuid.uuid4().hex[:8]}"
+            
         flat_children = []
         for child in children:
             if isinstance(child, list):

@@ -8,7 +8,8 @@ def NameCard(props):
     
     return div(
         h1(f"Hello {name}!" if name else "What's your name?"),
-        input_(type="text", 
+        input_(id="name-input",
+               type="text", 
                placeholder="Enter your name", 
                value=name, onInput=lambda e: set_name(e.get("value", ""))
         ),
