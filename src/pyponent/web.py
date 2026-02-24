@@ -1,5 +1,6 @@
 import json
 import asyncio
+import contextvars
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 import uvicorn
@@ -17,12 +18,8 @@ HTML_SHELL = """
             const ws = new WebSocket("ws://" + window.location.host + "/ws");
             
             ws.onmessage = function(event) {
-                // Save where the cursor is before we overwrite the HTML
                 const activeId = document.activeElement ? document.activeElement.id : null;
-                
                 document.getElementById("root").innerHTML = event.data;
-                
-                // Put the cursor back so the user can keep typing!
                 if (activeId) {
                     const el = document.getElementById(activeId);
                     if (el) {
@@ -32,16 +29,12 @@ HTML_SHELL = """
                 }
             };
             
-            // Listen for clicks AND typing
             const trackedEvents = ["click", "input", "change", "keydown", "submit"];
-            
             trackedEvents.forEach(eventType => {
                 document.addEventListener(eventType, function(event) {
                     if (event.target.id) {
                         if (eventType === "submit") event.preventDefault();
-                        
                         const eventName = "on" + eventType.charAt(0).toUpperCase() + eventType.slice(1);
-                        
                         ws.send(JSON.stringify({
                             target_id: event.target.id,
                             event_name: eventName,
@@ -70,32 +63,49 @@ def run(root_component, host="0.0.0.0", port=8000):
         dispatcher_context.set(user_dispatcher)
         latest_resolved_vdom = None
 
-        def render_loop():
+        # 1. Grab the server's main event loop and the user's specific context
+        loop = asyncio.get_running_loop()
+        ctx = contextvars.copy_context()
+
+        # 2. This is the actual rendering logic
+        def sync_render():
             nonlocal latest_resolved_vdom
             root_vnode = VNode(tag=root_component)
             latest_resolved_vdom = resolve_vdom(root_vnode)
             html_str = render_to_string(latest_resolved_vdom)
+            
             asyncio.create_task(websocket.send_text(html_str))
+            
+            current_dispatcher = dispatcher_context.get()
+            for effect_callback in current_dispatcher.pending_effects:
+                effect_callback()
+            current_dispatcher.pending_effects.clear()
+
+        # 3. This is the thread-safe trigger
+        def render_loop():
+            # No matter what thread calls this, push the render back to the main loop safely!
+            loop.call_soon_threadsafe(ctx.run, sync_render)
 
         user_dispatcher.trigger_render = render_loop
-        render_loop()
+        
+        # Initial render 
+        ctx.run(sync_render)
 
         try:
             while True:
                 data = await websocket.receive_text()
                 event_data = json.loads(data)
                 
-                # DEBUG PRINT: Watch your terminal to see if the browser is talking to Python!
-                print(f"Browser sent: {event_data}")
-                
-                fire_event(
+                # Run events safely inside the user's context
+                ctx.run(
+                    fire_event,
                     latest_resolved_vdom, 
                     event_data.get("target_id"), 
                     event_data.get("event_name"),
-                    event_data # Pass the typing data into the engine
+                    event_data
                 )
         except Exception:
-            print("Client disconnected.")
+            pass
 
     print(f"Starting Pyponent Web Server on http://localhost:{port}")
     uvicorn.run(app, host=host, port=port)
