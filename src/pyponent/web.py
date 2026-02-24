@@ -11,10 +11,14 @@ from .hooks import Dispatcher, dispatcher_context
 HTML_SHELL_TEMPLATE = """
 <!DOCTYPE html>
 <html>
-    <head><title>Pyponent App</title></head>
+    <head>
+        <title>{title}</title>
+        {meta_tags}
+    </head>
     <body>
         <div id="root">{initial_html}</div>
         <script>
+            // ... (Keep all your existing JavaScript exactly the same!) ...
             const ws = new WebSocket("ws://" + window.location.host + "/ws");
             
             ws.onmessage = function(event) {
@@ -49,22 +53,22 @@ HTML_SHELL_TEMPLATE = """
 </html>
 """
 
-def run(root_component, host="0.0.0.0", port=8000):
+def run(root_component, title="Pyponent App", meta_tags="", host="0.0.0.0", port=8000):
     app = FastAPI()
 
     @app.get("/")
     async def get():
-        # 1. Create a temporary dispatcher just for this initial HTTP request
         temp_dispatcher = Dispatcher()
         dispatcher_context.set(temp_dispatcher)
         
-        # 2. Render the application's first frame
         root_vnode = VNode(tag=root_component)
         resolved_vdom = resolve_vdom(root_vnode)
         initial_html = render_to_string(resolved_vdom)
         
-        # 3. FIX: Use .replace() instead of .format() to avoid curly brace collisions!
+        # Replace all three placeholders!
         html_content = HTML_SHELL_TEMPLATE.replace("{initial_html}", initial_html)
+        html_content = html_content.replace("{title}", title)
+        html_content = html_content.replace("{meta_tags}", meta_tags)
         
         return HTMLResponse(html_content)
 

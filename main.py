@@ -76,4 +76,19 @@ def TodoApp(props=None):
     )
 
 if __name__ == "__main__":
-    run(TodoApp, port=8000)
+    
+    # Define your SEO data
+    my_meta_tags = """
+        <meta charset="UTF-8">
+        <meta name="description" content="A blazing fast To-Do list built with Pyponent.">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta property="og:image" content="https://mywebsite.com/preview.png">
+    """
+    
+    # Pass them into the framework
+    run(
+        TodoApp, 
+        title="Pyponent Tasks", 
+        meta_tags=my_meta_tags, 
+        port=8000
+    )
