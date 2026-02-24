@@ -54,6 +54,8 @@ h2 = _make_tag("h2")
 button = _make_tag("button")
 form = _make_tag("form")
 label = _make_tag("label")
+ul = _make_tag("ul")
+li = _make_tag("li")
 
 # Python has a built-in `input()` function, so we must name this one `input_`
 input_ = _make_tag("input") 

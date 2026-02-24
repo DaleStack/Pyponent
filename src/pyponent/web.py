@@ -53,9 +53,9 @@ HTML_SHELL_TEMPLATE = """
 </html>
 """
 
-def run(root_component, title="Pyponent App", meta_tags="", host="0.0.0.0", port=8000):
-    app = FastAPI()
-
+def setup_pyponent(app: FastAPI, root_component, title="Pyponent App", meta_tags=""):
+    """Attaches Pyponent's HTML and WebSocket routes to an existing FastAPI app."""
+    
     @app.get("/")
     async def get():
         temp_dispatcher = Dispatcher()
@@ -65,13 +65,12 @@ def run(root_component, title="Pyponent App", meta_tags="", host="0.0.0.0", port
         resolved_vdom = resolve_vdom(root_vnode)
         initial_html = render_to_string(resolved_vdom)
         
-        # Replace all three placeholders!
         html_content = HTML_SHELL_TEMPLATE.replace("{initial_html}", initial_html)
         html_content = html_content.replace("{title}", title)
         html_content = html_content.replace("{meta_tags}", meta_tags)
         
         return HTMLResponse(html_content)
-
+    
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
         await websocket.accept()
@@ -123,5 +122,23 @@ def run(root_component, title="Pyponent App", meta_tags="", host="0.0.0.0", port
         except Exception:
             pass
 
-    print(f"Starting Pyponent Web Server on http://localhost:{port}")
+def run(target, title="Pyponent App", meta_tags="", host="0.0.0.0", port=8000):
+    """
+    Runs the Pyponent server. 
+    'target' can be a Pyponent Component, OR a pre-configured FastAPI app.
+    """
+    # 1. Did the user pass a custom FastAPI app, or just a UI component?
+    if isinstance(target, FastAPI):
+        app = target
+    else:
+        app = FastAPI()
+        setup_pyponent(app, root_component=target, title=title, meta_tags=meta_tags)
+
+    # 2. The Framework handles the Developer Experience (DX)!
+    print(f"\n🚀 Starting Pyponent Web Server on http://localhost:{port}")
+    if isinstance(target, FastAPI):
+        print("🔗 Hybrid Mode: Custom API routes are active.")
+    print("-" * 50 + "\n")
+    
+    # 3. Start the server
     uvicorn.run(app, host=host, port=port)
