@@ -18,7 +18,6 @@ HTML_SHELL_TEMPLATE = """
     <body>
         <div id="root">{initial_html}</div>
         <script>
-            // ... (Keep all your existing JavaScript exactly the same!) ...
             const ws = new WebSocket("ws://" + window.location.host + "/ws");
             
             ws.onmessage = function(event) {
@@ -35,7 +34,6 @@ HTML_SHELL_TEMPLATE = """
 
             ws.onclose = function() {
                 console.log("Server disconnected. Waiting for hot reload...");
-                // Ping the server every 1 second. When it responds, refresh the page!
                 const interval = setInterval(function() {
                     fetch("/").then(response => {
                         if (response.ok) {
@@ -49,6 +47,26 @@ HTML_SHELL_TEMPLATE = """
             const trackedEvents = ["click", "input", "change", "keydown", "submit"];
             trackedEvents.forEach(eventType => {
                 document.addEventListener(eventType, function(event) {
+                    
+                    // --- NEW: Intercept Pyponent Router Links ---
+                    if (eventType === "click") {
+                        const link = event.target.closest('a[data-pyponent-link="true"]');
+                        if (link) {
+                            event.preventDefault(); // Stop the browser from hard-reloading
+                            const newPath = link.getAttribute("href");
+                            window.history.pushState({}, "", newPath); // Update the URL bar silently
+                            
+                            // Send the click event directly to the Link's Python lambda
+                            ws.send(JSON.stringify({
+                                target_id: link.id,
+                                event_name: "onClick",
+                                value: newPath
+                            }));
+                            return; // Exit early so we don't trigger the generic click handler below
+                        }
+                    }
+
+                    // --- Standard Event Handling ---
                     if (event.target.id) {
                         if (eventType === "submit") event.preventDefault();
                         const eventName = "on" + eventType.charAt(0).toUpperCase() + eventType.slice(1);
@@ -61,6 +79,15 @@ HTML_SHELL_TEMPLATE = """
                     }
                 });
             });
+
+            // --- NEW: Handle Browser Back/Forward Buttons ---
+            window.addEventListener("popstate", function(event) {
+                ws.send(JSON.stringify({
+                    target_id: "system-router",
+                    event_name: "onPopState",
+                    value: window.location.pathname
+                }));
+            });
         </script>
     </body>
 </html>
@@ -69,12 +96,13 @@ HTML_SHELL_TEMPLATE = """
 def setup_pyponent(app: FastAPI, root_component, title="Pyponent App", meta_tags=""):
     """Attaches Pyponent's HTML and WebSocket routes to an existing FastAPI app."""
     
-    @app.get("/")
-    async def get():
+    @app.get("/{full_path:path}")
+    async def get(full_path: str):
         temp_dispatcher = Dispatcher()
         dispatcher_context.set(temp_dispatcher)
         
-        root_vnode = VNode(tag=root_component)
+        initial_path = "/" + full_path
+        root_vnode = VNode(tag=root_component, props={"initial_path": initial_path})
         resolved_vdom = resolve_vdom(root_vnode)
         initial_html = render_to_string(resolved_vdom)
         
@@ -124,12 +152,27 @@ def setup_pyponent(app: FastAPI, root_component, title="Pyponent App", meta_tags
                 data = await websocket.receive_text()
                 event_data = json.loads(data)
                 
-                # Run events safely inside the user's context
+                target_id = event_data.get("target_id")
+                event_name = event_data.get("event_name")
+                
+                # --- NEW: Intercept Router History (Back/Forward) ---
+                if target_id == "system-router" and event_name == "onPopState":
+                    def handle_popstate():
+                        current_dispatcher = dispatcher_context.get()
+                        # If the Router is active, it will have registered 'navigate'
+                        if hasattr(current_dispatcher, 'navigate'):
+                            current_dispatcher.navigate(event_data.get("value", "/"))
+                    
+                    # Run the navigation in context so it safely triggers your render_loop!
+                    ctx.run(handle_popstate)
+                    continue
+
+                # Run normal events safely inside the user's context
                 ctx.run(
                     fire_event,
                     latest_resolved_vdom, 
-                    event_data.get("target_id"), 
-                    event_data.get("event_name"),
+                    target_id, 
+                    event_name,
                     event_data
                 )
         except Exception:
