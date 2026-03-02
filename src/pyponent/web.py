@@ -21,14 +21,32 @@ HTML_SHELL_TEMPLATE = """
             const ws = new WebSocket("ws://" + window.location.host + "/ws");
             
             ws.onmessage = function(event) {
-                const activeId = document.activeElement ? document.activeElement.id : null;
-                document.getElementById("root").innerHTML = event.data;
-                if (activeId) {
-                    const el = document.getElementById(activeId);
-                    if (el) {
-                        el.focus();
-                        if (el.value) el.setSelectionRange(el.value.length, el.value.length);
-                    }
+                // Now we parse the JSON payload from Python!
+                const payload = JSON.parse(event.data);
+                
+                // 1. Initial Load: Draw the whole page
+                if (payload.type === "full") {
+                    document.getElementById("root").innerHTML = payload.html;
+                } 
+                // 2. Granular Updates: Apply tiny patches surgically
+                else if (payload.type === "patch") {
+                    payload.patches.forEach(patch => {
+                        const el = document.getElementById(patch.id);
+                        if (!el) return;
+                        
+                        if (patch.type === "replace") {
+                            el.outerHTML = patch.html;
+                        } else if (patch.type === "inner_html") {
+                            el.innerHTML = patch.html;
+                        } else if (patch.type === "props") {
+                            // Update attributes smartly without destroying the element!
+                            for (const [key, value] of Object.entries(patch.props)) {
+                                if (key === "class_name") el.className = value;
+                                else if (key === "value") el.value = value;
+                                else if (key !== "onClick" && key !== "onInput") el.setAttribute(key, value);
+                            }
+                        }
+                    });
                 }
             };
 
@@ -123,15 +141,32 @@ def setup_pyponent(app: FastAPI, root_component, title="Pyponent App", meta_tags
         loop = asyncio.get_running_loop()
         ctx = contextvars.copy_context()
 
-        # 2. This is the actual rendering logic
+        # 2. This is the actual rendering logic (Now with Diffing!)
         def sync_render():
             nonlocal latest_resolved_vdom
+            
+            # Resolve the new tree
             root_vnode = VNode(tag=root_component)
-            latest_resolved_vdom = resolve_vdom(root_vnode)
-            html_str = render_to_string(latest_resolved_vdom)
+            new_vdom = resolve_vdom(root_vnode)
             
-            asyncio.create_task(websocket.send_text(html_str))
+            # 1. Is this the very first WebSocket render?
+            if latest_resolved_vdom is None:
+                html_str = render_to_string(new_vdom)
+                # Send the full HTML structure as a JSON payload
+                asyncio.create_task(websocket.send_json({"type": "full", "html": html_str}))
+            else:
+                # 2. It's an update! Calculate the patches.
+                from src.pyponent.diff import diff_vdom
+                patches = diff_vdom(latest_resolved_vdom, new_vdom)
+                
+                # Only send data over the network if something ACTUALLY changed
+                if patches:
+                    asyncio.create_task(websocket.send_json({"type": "patch", "patches": patches}))
             
+            # Save the new tree so we can compare against it next time
+            latest_resolved_vdom = new_vdom
+            
+            # Run any side effects (like database fetches)
             current_dispatcher = dispatcher_context.get()
             for effect_callback in current_dispatcher.pending_effects:
                 effect_callback()

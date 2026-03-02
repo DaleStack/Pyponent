@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Union
 from src.pyponent.hooks import dispatcher_context
@@ -7,6 +8,13 @@ class VNode:
     tag: Union[str, Callable] 
     props: Dict[str, Any] = field(default_factory=dict)
     children: List[Union['VNode', str]] = field(default_factory=list)
+    id: str = field(init=False) # Tell dataclass we will set this ourselves
+
+    def __post_init__(self):
+        # --- NEW: Guarantee an ID for every element for the Diffing Engine ---
+        if "id" not in self.props:
+            self.props["id"] = f"pyp-{uuid.uuid4().hex[:8]}"
+        self.id = self.props["id"]
 
 def render_to_string(node: Union[VNode, str]) -> str:
     if isinstance(node, str):
@@ -53,7 +61,8 @@ def resolve_vdom(node: Union[VNode, str], path: str = "root") -> Union[VNode, st
         current_dispatcher.prepare_render(node_id)
         
         try:
-            resolved_component = node.tag(node.props)
+            # FIX: Use ** to unpack the dictionary into keyword arguments!
+            resolved_component = node.tag(**node.props)
         except TypeError:
             resolved_component = node.tag() 
             
