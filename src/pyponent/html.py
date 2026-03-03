@@ -57,6 +57,7 @@ label = _make_tag("label")
 ul = _make_tag("ul")
 li = _make_tag("li")
 a = _make_tag("a")
+textarea = _make_tag("textarea")
 
 # Python has a built-in `input()` function, so we must name this one `input_`
 input_ = _make_tag("input") 

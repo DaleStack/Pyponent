@@ -70,6 +70,8 @@ def resolve_vdom(node: Union[VNode, str], path: str = "root") -> Union[VNode, st
 
     resolved_children = []
     for index, child in enumerate(node.children):
+        if child is None:
+            continue
         child_path = f"{path}.{index}"
         resolved_children.append(resolve_vdom(child, child_path))
 
