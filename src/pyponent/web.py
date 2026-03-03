@@ -1,7 +1,6 @@
 import json
 import asyncio
 import contextvars
-import os
 from pathlib import Path
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse, FileResponse
@@ -17,25 +16,21 @@ from .hooks import Dispatcher, dispatcher_context
 
 def _process_header_tags(header_tags, app: FastAPI) -> str:
     """
-    Accepts a str or list[str].  Each item is either:
-      - A raw HTML tag string  → used as-is
-      - A path ending in .css  → served as a static file and converted to
-                                 <link rel="stylesheet" href="/__pyponent_css__/filename.css">
+    Accepts a str or list[str]. Each item is either:
+      - A raw HTML tag string  -> used as-is
+      - A path ending in .css  -> served as a static file and converted to
+                                  <link rel="stylesheet" href="/__pyponent_css__/filename.css">
 
     Returns a single string ready to be dropped into <head>.
     """
     if not header_tags:
         return ""
 
-    if isinstance(header_tags, str):
-        items = [header_tags]
-    else:
-        items = list(header_tags)
+    items = [header_tags] if isinstance(header_tags, str) else list(header_tags)
 
     resolved = []
     for item in items:
         item = item.strip()
-        # Detect bare .css file paths (not already wrapped in a tag)
         if item.endswith(".css") and not item.startswith("<"):
             css_path = Path(item)
             if not css_path.exists():
@@ -54,37 +49,12 @@ def _process_header_tags(header_tags, app: FastAPI) -> str:
 
 def _register_css_route(app: FastAPI, route_url: str, file_path: str):
     """Adds a GET route that serves the given CSS file, if not already registered."""
-    existing_routes = {r.path for r in app.routes}
-    if route_url in existing_routes:
+    if any(r.path == route_url for r in app.routes):
         return
 
     @app.get(route_url)
     async def serve_css(fp=file_path):
         return FileResponse(fp, media_type="text/css")
-
-
-# ---------------------------------------------------------------------------
-# Tailwind helper
-# ---------------------------------------------------------------------------
-
-def _build_tailwind_tags(config_path: str = "tailwind.config.js") -> str:
-    """
-    Returns the Tailwind CDN Play <script> tag.
-    If a tailwind.config.js exists, also inlines a <script> that forwards it
-    to the CDN build via window.tailwind.config.
-    """
-    cdn = '<script src="https://cdn.tailwindcss.com"></script>'
-
-    if not os.path.exists(config_path):
-        return cdn
-
-    try:
-        raw = Path(config_path).read_text()
-        # Strip CommonJS wrapper → plain assignment the CDN build can eval
-        config_obj = raw.replace("module.exports", "tailwind.config").strip()
-        return f"{cdn}\n        <script>{config_obj}</script>"
-    except Exception:
-        return cdn
 
 
 # ---------------------------------------------------------------------------
@@ -104,18 +74,18 @@ HTML_SHELL_TEMPLATE = """\
         <div id="root">{initial_html}</div>
         <script>
             const ws = new WebSocket("ws://" + window.location.host + "/ws");
-            
+
             ws.onmessage = function(event) {
                 const payload = JSON.parse(event.data);
-                
+
                 if (payload.type === "full") {
                     document.getElementById("root").innerHTML = payload.html;
-                } 
+                }
                 else if (payload.type === "patch") {
                     payload.patches.forEach(patch => {
                         const el = document.getElementById(patch.id);
                         if (!el) return;
-                        
+
                         if (patch.type === "replace") {
                             el.outerHTML = patch.html;
                         } else if (patch.type === "inner_html") {
@@ -139,11 +109,11 @@ HTML_SHELL_TEMPLATE = """\
                     }).catch(e => {});
                 }, 1000);
             };
-            
+
             const trackedEvents = ["click", "input", "change", "keydown", "submit"];
             trackedEvents.forEach(eventType => {
                 document.addEventListener(eventType, function(event) {
-                    
+
                     if (eventType === "click") {
                         const link = event.target.closest('a[data-pyponent-link="true"]');
                         if (link) {
@@ -195,42 +165,37 @@ def setup_pyponent(
     title: str = "Pyponent App",
     header_tags=None,
     use_tailwind: bool = False,
-    tailwind_config: str = "tailwind.config.js",
 ):
     """
     Attaches Pyponent's HTML and WebSocket routes to an existing FastAPI app.
 
     Parameters
     ----------
-    app              : FastAPI instance.
-    root_component   : Root Pyponent component function.
-    title            : Browser tab title.
-    header_tags      : str or list[str] injected into <head>.
-                       Raw HTML tag strings are used as-is.
-                       Bare .css file paths are auto-served and converted to
-                       <link rel="stylesheet"> tags automatically.
+    app            : FastAPI instance.
+    root_component : Root Pyponent component function.
+    title          : Browser tab title.
+    header_tags    : str or list[str] injected into <head>.
+                     Raw HTML tag strings are used as-is.
+                     Bare .css file paths are auto-served and converted to
+                     <link rel="stylesheet"> tags automatically.
 
-                       Examples::
+                     Examples::
 
-                           header_tags=[
-                               '<meta name="description" content="My app">',
-                               '<meta property="og:title" content="My app">',
-                               '<link rel="icon" href="/favicon.ico">',
-                               "styles/main.css",   # ← path on disk, served automatically
-                           ]
+                         header_tags=[
+                             '<meta name="description" content="My app">',
+                             '<meta property="og:title" content="My app">',
+                             '<link rel="icon" href="/favicon.ico">',
+                             "styles/main.css",
+                         ]
 
-    use_tailwind     : Inject Tailwind CSS via the CDN Play script.
-                       If a tailwind.config.js is found at ``tailwind_config``,
-                       its contents are forwarded to the CDN build automatically.
-    tailwind_config  : Path to tailwind.config.js (default: cwd).
-                       Only read when use_tailwind=True.
+    use_tailwind   : Inject the Tailwind CSS CDN script into <head>.
+                     Use class_name="..." on any element to apply Tailwind classes.
     """
-    # CSS file routes must be registered against `app` before routes are locked in
     resolved_header = _process_header_tags(header_tags, app)
 
     if use_tailwind:
-        tw_block = _build_tailwind_tags(tailwind_config)
-        resolved_header = (resolved_header + "\n        " + tw_block).strip() if resolved_header else tw_block
+        tw_tag = '<script src="https://cdn.tailwindcss.com"></script>'
+        resolved_header = (resolved_header + "\n        " + tw_tag).strip() if resolved_header else tw_tag
 
     def _render_shell(initial_html: str) -> str:
         html = HTML_SHELL_TEMPLATE
@@ -325,7 +290,6 @@ def run(
     title: str = "Pyponent App",
     header_tags=None,
     use_tailwind: bool = False,
-    tailwind_config: str = "tailwind.config.js",
     host: str = "0.0.0.0",
     port: int = 8000,
     reload: bool = False,
@@ -335,22 +299,20 @@ def run(
 
     Parameters
     ----------
-    target           : FastAPI instance, import string, or root component function.
-    title            : Browser tab title.
-    header_tags      : str or list[str] injected into <head>.
-                       Bare .css paths → auto-served + converted to <link> tags.
-                       Raw HTML strings → used as-is (SEO meta, OG tags, fonts…).
-    use_tailwind     : Enable Tailwind CSS via CDN Play script.
-    tailwind_config  : Path to tailwind.config.js (only used when use_tailwind=True).
-    host / port      : Bind address.
-    reload           : Hot-reload (requires target as an import string).
+    target       : FastAPI instance, import string, or root component function.
+    title        : Browser tab title.
+    header_tags  : str or list[str] injected into <head>.
+                   Bare .css paths -> auto-served + converted to <link> tags.
+                   Raw HTML strings -> used as-is (SEO meta, OG tags, fonts...).
+    use_tailwind : Inject the Tailwind CSS CDN into <head>.
+    host / port  : Bind address.
+    reload       : Uvicorn hot-reload (requires target as an import string).
     """
     print(f"\n🚀 Starting Pyponent Web Server on http://localhost:{port}")
     if reload:
         print("🔄 Hot Reload is ENABLED. Watching for file changes...")
     if use_tailwind:
-        has_config = os.path.exists(tailwind_config)
-        print("🎨 Tailwind CSS: CDN Play" + (f" + {tailwind_config}" if has_config else ""))
+        print("🎨 Tailwind CSS: CDN")
     if isinstance(target, FastAPI) or (isinstance(target, str) and "app" in target):
         print("🔗 Hybrid Mode: Custom API routes are active.")
     print("-" * 50 + "\n")
@@ -358,7 +320,7 @@ def run(
     if reload:
         if not isinstance(target, str):
             raise ValueError(
-                "⚠️ To use reload=True, pass an import string (e.g. 'main:app') "
+                "To use reload=True, pass an import string (e.g. 'main:app') "
                 "so the reloader can locate your application."
             )
         uvicorn.run(target, host=host, port=port, reload=True)
@@ -374,7 +336,6 @@ def run(
             title=title,
             header_tags=header_tags,
             use_tailwind=use_tailwind,
-            tailwind_config=tailwind_config,
         )
 
     uvicorn.run(app, host=host, port=port)

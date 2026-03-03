@@ -8,7 +8,7 @@ def Counter(**props):
     count, set_count = use_state(0)
     
     return div(
-        h1(f"Clicks: {count}", style="margin-top: 0;"),
+        h1(f"Clicks: {count}", style="margin-top: 0;", class_name="counter-title"),
         button("Increment", onClick=lambda e: set_count(count + 1), style="padding: 10px; margin-right: 10px;"),
         button("Reset", onClick=lambda e: set_count(0)),
         button("Decrement", onClick=lambda e: set_count(count - 1), style="padding: 10px;"),
@@ -21,7 +21,7 @@ def LiveText(**props):
     
     return div(
         h1("Typing Test", style="margin-top: 0;"),
-        p("Testing", class_name="form-label"),
+        p("Testing", class_name="text-lg font-bold text-yellow-400"),
         p("Type below. The DOM won't refresh, only the text will update!"),
         input_(
             id="live-text-input",
@@ -56,7 +56,9 @@ app = FastAPI()
 setup_pyponent(app, 
                App, 
                title="Pyponent Diffing Test",
+               use_tailwind=True,
                header_tags=[
+                   # Styles
                    "styles/sample.css"
                ])
 
