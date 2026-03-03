@@ -21,6 +21,7 @@ def LiveText(**props):
     
     return div(
         h1("Typing Test", style="margin-top: 0;"),
+        p("Testing", class_name="form-label"),
         p("Type below. The DOM won't refresh, only the text will update!"),
         input_(
             id="live-text-input",
@@ -52,7 +53,12 @@ def App(**props):
     )
 
 app = FastAPI()
-setup_pyponent(app, App, title="Pyponent Diffing Test")
+setup_pyponent(app, 
+               App, 
+               title="Pyponent Diffing Test",
+               header_tags=[
+                   "styles/sample.css"
+               ])
 
 if __name__ == "__main__":
     run("main:app", port=8000, reload=True)
