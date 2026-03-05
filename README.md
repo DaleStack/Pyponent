@@ -161,3 +161,7 @@ def App(**props):
         )
     )
 ```
+
+## License
+
+Pyponent is proudly open-source and is licensed under the [MIT License](LICENSE). You are free to use it in personal, open-source, and commercial projects.
