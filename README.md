@@ -49,3 +49,115 @@ Modern web development often requires massive context switching. To build a dyna
 
 ```bash
 pip install pyponent fastapi uvicorn
+```
+
+## The "Hello World" App
+
+Create a file named `main.py`
+```python
+from fastapi import FastAPI
+from pyponent.web import setup_pyponent, run
+from pyponent.html import div, h1, p
+
+def App(**props):
+    return div(
+        h1("Hello, Pyponent!"),
+        p("This is a pure Python UI.")
+    )
+
+app = FastAPI()
+
+# Attach Pyponent to your FastAPI app
+setup_pyponent(app, App, title="My First App")
+
+if __name__ == "__main__":
+    run("main:app", port=8000, reload=True)
+```
+Run it via terminal: `python main.py` or `uv run main.py`
+
+
+## Core Features
+
+### 1. State & Interactivity (`use_state`)
+Add interactivity without JavaScript. Just bind state to your HTML elements.
+```python
+from pyponent.hooks import use_state
+from pyponent.html import div, h2, button
+
+def Counter(**props):
+    count, set_count = use_state(0)
+    
+    return div(
+        h2(f"Clicks: {count}"),
+        button("Increment", onClick=lambda e: set_count(count + 1))
+    )
+```
+
+### 2. Live Inputs (No Cursor Loss!)
+Because of Pyponent's surgical diffing engine, you can type into inputs without the DOM reloading.
+
+⚠️ Golden Rule: Always provide a hardcoded id for text inputs!
+```python
+from pyponent.hooks import use_state
+from pyponent.html import div, input_, p
+
+def LiveMirror(**props):
+    text, set_text = use_state("")
+    
+    return div(
+        input_(
+            id="mirror-input", # Required!
+            type="text",
+            value=text,
+            onInput=lambda e: set_text(e.get("value", ""))
+        ),
+        p("You typed: ", text)
+    )
+```
+
+### 3. Tailwind & Custom Head Tags
+Pyponent makes styling effortless. You can inject multiple `meta`, `link`, or `script` tags safely using a list, and opt into Tailwind CSS with a single flag.
+```python
+from pyponent.hooks import use_state
+from pyponent.html import div, input_, p
+from pyponent.web import setup_pyponent
+
+my_seo_tags = [
+    '<meta name="description" content="A blazing fast Pyponent App.">',
+    'styles/sample.css', # Use styles/ directory, it has automatic injection
+    '<script src="[https://js.stripe.com/v3/](https://js.stripe.com/v3/)"></script>'
+]
+
+setup_pyponent(
+    app, 
+    App, 
+    title="My E-Commerce Dashboard", 
+    use_tailwind=True,  # Instantly activates Tailwind CDN!
+    meta_tags=my_seo_tags
+)
+```
+
+### 4. Zero Refresh Routing
+Build Multi-Page Applications without page reloads using the built-in router.
+```python
+from pyponent.router import Router, Link
+
+def Navigation(**props):
+    return div(
+        # Use Link for internal SPA navigation and a tag for external
+        Link(to="/", children=["Home"]),
+        Link(to="/dashboard", children=["Dashboard"])
+    )
+
+def App(**props):
+    return div(
+        Navigation(),
+        Router(
+            initial_path=props.get("initial_path", "/"),
+            routes={
+                "/": HomePage,
+                "/dashboard": DashboardPage
+            }
+        )
+    )
+```

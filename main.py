@@ -8,10 +8,17 @@ def Counter(**props):
     count, set_count = use_state(0)
     
     return div(
-        h1(f"Clicks: {count}", style="margin-top: 0;", class_name="counter-title"),
-        button("Increment", onClick=lambda e: set_count(count + 1), style="padding: 10px; margin-right: 10px;"),
-        button("Reset", onClick=lambda e: set_count(0)),
-        button("Decrement", onClick=lambda e: set_count(count - 1), style="padding: 10px;"),
+        h1(f"Clicks: {count}", 
+           style="margin-top: 0;", 
+           class_name="counter-title"),
+        button("Increment", 
+               onClick=lambda e: set_count(count + 1), 
+               style="padding: 10px; margin-right: 10px;"),
+        button("Reset", 
+               onClick=lambda e: set_count(0)),
+        button("Decrement", 
+               onClick=lambda e: set_count(count - 1), 
+               style="padding: 10px;"),
         style="padding: 20px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; background: #f9f9f9;"
     )
 
