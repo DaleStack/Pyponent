@@ -236,7 +236,7 @@ def setup_pyponent(
                 html_str = render_to_string(new_vdom)
                 asyncio.create_task(websocket.send_json({"type": "full", "html": html_str}))
             else:
-                from src.pyponent.diff import diff_vdom
+                from .diff import diff_vdom
                 patches = diff_vdom(latest_resolved_vdom, new_vdom)
                 if patches:
                     asyncio.create_task(websocket.send_json({"type": "patch", "patches": patches}))

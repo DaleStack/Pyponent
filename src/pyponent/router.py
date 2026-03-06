@@ -1,6 +1,6 @@
 # src/pyponent/router.py
-from src.pyponent.hooks import use_state, dispatcher_context
-from src.pyponent.html import a, div
+from .hooks import use_state, dispatcher_context
+from .html import a, div
 
 def Router(**props):  # <-- FIX: Added ** here
     routes = props.get("routes", {})

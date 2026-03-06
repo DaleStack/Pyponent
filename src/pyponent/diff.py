@@ -1,5 +1,5 @@
 # src/pyponent/diff.py
-from src.pyponent.core import VNode, render_to_string
+from .core import VNode, render_to_string
 
 def diff_vdom(old, new):
     patches = []
