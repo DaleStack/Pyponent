@@ -11,7 +11,7 @@ class VNode:
     id: str = field(init=False) # Tell dataclass we will set this ourselves
 
     def __post_init__(self):
-        # --- NEW: Guarantee an ID for every element for the Diffing Engine ---
+        # Guarantee an ID for every element for the Diffing Engine 
         if "id" not in self.props:
             self.props["id"] = f"pyp-{uuid.uuid4().hex[:8]}"
         self.id = self.props["id"]
@@ -61,7 +61,7 @@ def resolve_vdom(node: Union[VNode, str], path: str = "root") -> Union[VNode, st
         current_dispatcher.prepare_render(node_id)
         
         try:
-            # FIX: Use ** to unpack the dictionary into keyword arguments!
+            # Use ** to unpack the dictionary into keyword arguments
             resolved_component = node.tag(**node.props)
         except TypeError:
             resolved_component = node.tag() 

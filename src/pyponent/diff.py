@@ -1,4 +1,3 @@
-# src/pyponent/diff.py
 from .core import VNode, render_to_string
 
 def diff_vdom(old, new):
@@ -10,14 +9,13 @@ def diff_vdom(old, new):
     new.id = old.id
     new.props["id"] = old.id
 
-    # --- THE FIX: Filter out functions before diffing and sending! ---
+    # Filter out functions before diffing and sending
     safe_old_props = {k: v for k, v in old.props.items() if not callable(v) and not k.startswith("on")}
     safe_new_props = {k: v for k, v in new.props.items() if not callable(v) and not k.startswith("on")}
 
     if safe_old_props != safe_new_props:
         patches.append({"type": "props", "id": new.id, "props": safe_new_props})
 
-    # ... (Keep your existing children diffing logic exactly the same) ...
     if len(old.children) != len(new.children):
         inner_html = "".join(render_to_string(c) for c in new.children)
         patches.append({"type": "inner_html", "id": new.id, "html": inner_html})

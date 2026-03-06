@@ -10,9 +10,7 @@ from .core import VNode, render_to_string, fire_event, resolve_vdom
 from .hooks import Dispatcher, dispatcher_context
 
 
-# ---------------------------------------------------------------------------
 # header_tags processor
-# ---------------------------------------------------------------------------
 
 def _process_header_tags(header_tags, app: FastAPI) -> str:
     """
@@ -57,9 +55,9 @@ def _register_css_route(app: FastAPI, route_url: str, file_path: str):
         return FileResponse(fp, media_type="text/css")
 
 
-# ---------------------------------------------------------------------------
+
 # HTML shell
-# ---------------------------------------------------------------------------
+
 
 HTML_SHELL_TEMPLATE = """\
 <!DOCTYPE html>
@@ -155,9 +153,9 @@ HTML_SHELL_TEMPLATE = """\
 """
 
 
-# ---------------------------------------------------------------------------
+
 # setup_pyponent
-# ---------------------------------------------------------------------------
+
 
 def setup_pyponent(
     app: FastAPI,
@@ -279,11 +277,7 @@ def setup_pyponent(
                 )
         except Exception:
             pass
-
-
-# ---------------------------------------------------------------------------
 # run
-# ---------------------------------------------------------------------------
 
 def run(
     target,

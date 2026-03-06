@@ -1,12 +1,12 @@
-# src/pyponent/router.py
 from .hooks import use_state, dispatcher_context
 from .html import a, div
 
-def Router(**props):  # <-- FIX: Added ** here
+def Router(**props): 
+    
     routes = props.get("routes", {})
     initial_path = props.get("initial_path", "/")
     
-    # The Router's state is literally just the current URL!
+    # The Router's state is literally just the current URL
     current_path, set_current_path = use_state(initial_path)
     
     # We store the 'navigate' function globally in the dispatcher 
@@ -22,7 +22,7 @@ def Router(**props):  # <-- FIX: Added ** here
         
     return RouteComponent()
 
-def Link(**props): # <-- FIX: Added ** here
+def Link(**props): 
     to = props.get("to", "/")
     
     def on_click(e):
