@@ -23,6 +23,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "build>=1.4.0",
     "fastapi>=0.132.0",
     "pytest>=9.0.2",
     "uvicorn[standard]>=0.41.0",
