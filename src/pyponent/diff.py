@@ -1,5 +1,6 @@
 from .core import VNode, render_to_string
 
+
 def diff_vdom(old, new):
     patches = []
 
@@ -10,8 +11,12 @@ def diff_vdom(old, new):
     new.props["id"] = old.id
 
     # Filter out functions before diffing and sending
-    safe_old_props = {k: v for k, v in old.props.items() if not callable(v) and not k.startswith("on")}
-    safe_new_props = {k: v for k, v in new.props.items() if not callable(v) and not k.startswith("on")}
+    safe_old_props = {
+        k: v for k, v in old.props.items() if not callable(v) and not k.startswith("on")
+    }
+    safe_new_props = {
+        k: v for k, v in new.props.items() if not callable(v) and not k.startswith("on")
+    }
 
     if safe_old_props != safe_new_props:
         patches.append({"type": "props", "id": new.id, "props": safe_new_props})

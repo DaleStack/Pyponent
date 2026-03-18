@@ -12,6 +12,7 @@ from .hooks import Dispatcher, dispatcher_context
 
 # header_tags processor
 
+
 def _process_header_tags(header_tags, app: FastAPI) -> str:
     """
     Accepts a str or list[str]. Each item is either:
@@ -53,7 +54,6 @@ def _register_css_route(app: FastAPI, route_url: str, file_path: str):
     @app.get(route_url)
     async def serve_css(fp=file_path):
         return FileResponse(fp, media_type="text/css")
-
 
 
 # HTML shell
@@ -153,7 +153,6 @@ HTML_SHELL_TEMPLATE = """\
 """
 
 
-
 # setup_pyponent
 
 
@@ -193,7 +192,11 @@ def setup_pyponent(
 
     if use_tailwind:
         tw_tag = '<script src="https://cdn.tailwindcss.com"></script>'
-        resolved_header = (resolved_header + "\n        " + tw_tag).strip() if resolved_header else tw_tag
+        resolved_header = (
+            (resolved_header + "\n        " + tw_tag).strip()
+            if resolved_header
+            else tw_tag
+        )
 
     def _render_shell(initial_html: str) -> str:
         html = HTML_SHELL_TEMPLATE
@@ -232,12 +235,17 @@ def setup_pyponent(
 
             if latest_resolved_vdom is None:
                 html_str = render_to_string(new_vdom)
-                asyncio.create_task(websocket.send_json({"type": "full", "html": html_str}))
+                asyncio.create_task(
+                    websocket.send_json({"type": "full", "html": html_str})
+                )
             else:
                 from .diff import diff_vdom
+
                 patches = diff_vdom(latest_resolved_vdom, new_vdom)
                 if patches:
-                    asyncio.create_task(websocket.send_json({"type": "patch", "patches": patches}))
+                    asyncio.create_task(
+                        websocket.send_json({"type": "patch", "patches": patches})
+                    )
 
             latest_resolved_vdom = new_vdom
 
@@ -261,10 +269,12 @@ def setup_pyponent(
                 event_name = event_data.get("event_name")
 
                 if target_id == "system-router" and event_name == "onPopState":
+
                     def handle_popstate():
                         current_dispatcher = dispatcher_context.get()
                         if hasattr(current_dispatcher, "navigate"):
                             current_dispatcher.navigate(event_data.get("value", "/"))
+
                     ctx.run(handle_popstate)
                     continue
 
@@ -277,7 +287,10 @@ def setup_pyponent(
                 )
         except Exception:
             pass
+
+
 # run
+
 
 def run(
     target,

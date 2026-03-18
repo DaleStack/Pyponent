@@ -1,9 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "pyponent"
 version = "0.1.0"
-description = "Add your description here"
+description = "A blazing-fast, Server-Driven UI framework for Python using FastAPI and WebSockets."
 readme = "README.md"
 requires-python = ">=3.13"
+
+authors = [
+    { name = "Casey Dale Siatong", email = "daledev07@gmail.com" }, 
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Intended Audience :: Developers",
+]
+
 dependencies = [
     "fastapi>=0.132.0",
     "pytest>=9.0.2",
@@ -11,6 +29,28 @@ dependencies = [
     "watchfiles>=1.1.1",
     "websocket>=0.2.1",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.3.0",
+    "build",
+    "twine"
+]
+
+[tool.ruff]
+line-length = 88 # The standard Black line length
+target-version = "py39"
+
+[tool.ruff.lint]
+# E = pycodestyle (standard formatting rules)
+# F = pyflakes (catches unused imports, undefined variables)
+# I = isort (automatically sorts your imports alphabetically)
+select = ["E", "F", "I"]
+
+[project.urls]
+"Homepage" = "https://github.com/DaleStack/Pyponent" 
+"Bug Tracker" = "https://github.com/DaleStack/Pyponent/issues" 
 
 [tool.pytest.ini_options]
 pythonpath = [
