@@ -1,5 +1,6 @@
-from .core import VNode
 import uuid
+
+from .core import VNode
 
 
 def component(component_func, *children, **kwargs):

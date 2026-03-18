@@ -1,14 +1,14 @@
-import json
 import asyncio
 import contextvars
+import json
 from pathlib import Path
-from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse, FileResponse
+
 import uvicorn
+from fastapi import FastAPI, WebSocket
+from fastapi.responses import FileResponse, HTMLResponse
 
-from .core import VNode, render_to_string, fire_event, resolve_vdom
+from .core import VNode, fire_event, render_to_string, resolve_vdom
 from .hooks import Dispatcher, dispatcher_context
-
 
 # header_tags processor
 
@@ -21,7 +21,7 @@ def _process_header_tags(header_tags, app: FastAPI) -> str:
                                   <link rel="stylesheet" href="/__pyponent_css__/filename.css">
 
     Returns a single string ready to be dropped into <head>.
-    """
+    """  # noqa: E501
     if not header_tags:
         return ""
 
@@ -150,7 +150,7 @@ HTML_SHELL_TEMPLATE = """\
         </script>
     </body>
 </html>
-"""
+"""  # noqa: E501
 
 
 # setup_pyponent

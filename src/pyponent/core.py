@@ -1,6 +1,7 @@
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Union
+
 from .hooks import dispatcher_context
 
 
@@ -45,7 +46,8 @@ def fire_event(
                 # Pass the typing payload to the user's function
                 handler(event_data or {})
             except TypeError:
-                # If they didn't ask for the payload (like a simple button click), run it empty
+                # If they didn't ask for the payload (like a simple button click),
+                # run it empty
                 handler()
             return True
         return False
