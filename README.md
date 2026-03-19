@@ -48,7 +48,7 @@ Modern web development often requires massive context switching. To build a dyna
 *(Note: Pyponent is designed to run alongside Uvicorn and FastAPI).*
 
 ```bash
-pip install pyponent fastapi uvicorn
+pip install pyponent
 ```
 
 ## The "Hello World" App
