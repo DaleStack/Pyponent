@@ -8,11 +8,12 @@ def component(component_func, *children, **kwargs):
     props = kwargs
     return VNode(tag=component_func, props=props, children=list(children))
 
+
 def _make_tag(tag_name):
     def tag_helper(*children, **kwargs):
         props = {}
-        has_event = False # Track if this element has an action
-        
+        has_event = False  # Track if this element has an action
+
         for key, value in kwargs.items():
             if key == "class_name":
                 props["class"] = value
@@ -22,7 +23,7 @@ def _make_tag(tag_name):
                 props[key.replace("_", "-")] = value
             else:
                 props[key] = value
-                
+
             # Check if the user attached an event!
             if key.startswith("on_"):
                 parts = key.split("_")
@@ -31,11 +32,11 @@ def _make_tag(tag_name):
                 has_event = True
             else:
                 props[key] = value
-                
+
         # If there is an event but no ID, generate a secure random one!
         if has_event and "id" not in props:
             props["id"] = f"pyponent-{uuid.uuid4().hex[:8]}"
-            
+
         flat_children = []
         for child in children:
             if isinstance(child, list):
@@ -44,7 +45,7 @@ def _make_tag(tag_name):
                 flat_children.append(child)
 
         return VNode(tag=tag_name, props=props, children=flat_children)
-    
+
     return tag_helper
 
 
@@ -66,6 +67,6 @@ a = _make_tag("a")
 textarea = _make_tag("textarea")
 
 # Python has a built-in `input()` function, so we must name this one `input_`
-input_ = _make_tag("input") 
+input_ = _make_tag("input")
 
 # Easily add more tags here as you need them!
