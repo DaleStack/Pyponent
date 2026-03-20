@@ -1,3 +1,9 @@
+
+<div align="center">
+  <img src="assets/PyponentLogo.png" alt="Pyponent Logo" width="500"/>
+</div>
+
+
 # Pyponent
 
 **Pyponent** is a blazing-fast, Server-Driven UI (SDUI) framework for Python. It allows you to build highly interactive, real-time Single Page Applications (SPAs) entirely in Python—without writing a single line of JavaScript, HTML, or CSS (unless you want to).
