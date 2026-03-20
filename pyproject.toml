@@ -23,7 +23,6 @@ classifiers = [
 ]
 
 dependencies = [
-    "build>=1.4.0",
     "fastapi>=0.132.0",
     "pytest>=9.0.2",
     "uvicorn[standard]>=0.41.0",
@@ -35,8 +34,10 @@ dependencies = [
 dev = [
     "pytest>=7.0",
     "ruff>=0.3.0",
+    "mkdocs-material>=9.7.6",
     "build",
     "twine"
+    "mkdocs<2.0.0"
 ]
 
 [tool.ruff]

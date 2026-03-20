@@ -12,3 +12,8 @@ wheels/
 *.db
 
 test.py
+
+
+# Documentation
+docs/
+mkdocs.yml
