@@ -824,9 +824,7 @@ name = "pyponent"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "build" },
     { name = "fastapi" },
-    { name = "mkdocs-material" },
     { name = "pytest" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "watchfiles" },
@@ -836,6 +834,8 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "build" },
+    { name = "mkdocs" },
+    { name = "mkdocs-material" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "twine" },
@@ -843,10 +843,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "build", specifier = ">=1.4.0" },
     { name = "build", marker = "extra == 'dev'" },
     { name = "fastapi", specifier = ">=0.132.0" },
-    { name = "mkdocs-material", specifier = ">=9.7.6" },
+    { name = "mkdocs", marker = "extra == 'dev'", specifier = "<2.0.0" },
+    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.7.6" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },

@@ -58,7 +58,6 @@ def _register_css_route(app: FastAPI, route_url: str, file_path: str):
 
 # HTML shell
 
-
 HTML_SHELL_TEMPLATE = """\
 <!DOCTYPE html>
 <html>
@@ -97,6 +96,17 @@ HTML_SHELL_TEMPLATE = """\
                         }
                     });
                 }
+                
+                // --- THE MAGIC URL SYNC ---
+                // After the DOM is fully updated, check if the server rendered a new URL
+                const routerWrapper = document.getElementById("pyponent-router-wrapper");
+                if (routerWrapper) {
+                    // Note: We look for the hyphenated HTML attribute here!
+                    const serverUrl = routerWrapper.getAttribute("data-pyponent-url");
+                    if (serverUrl && window.location.pathname !== serverUrl) {
+                        window.history.pushState({}, "", serverUrl);
+                    }
+                }
             };
 
             ws.onclose = function() {
@@ -119,8 +129,8 @@ HTML_SHELL_TEMPLATE = """\
                             const newPath = link.getAttribute("href");
                             window.history.pushState({}, "", newPath);
                             ws.send(JSON.stringify({
-                                target_id: link.id,
-                                event_name: "onClick",
+                                target_id: "system-router", // We route the click directly to the system router
+                                event_name: "onPopState",
                                 value: newPath
                             }));
                             return;

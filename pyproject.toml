@@ -36,8 +36,8 @@ dev = [
     "ruff>=0.3.0",
     "mkdocs-material>=9.7.6",
     "build",
-    "twine"
-    "mkdocs<2.0.0"
+    "twine",
+    "mkdocs<2.0.0",
 ]
 
 [tool.ruff]

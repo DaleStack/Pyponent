@@ -83,3 +83,17 @@ def use_async_effect(callback, deps=None):
 
     # We pass our thread_runner into the standard use_effect
     use_effect(thread_runner, deps)
+
+def use_navigate():
+    """
+    Returns a navigation function to programmatically change the current route.
+    """
+    dispatcher = dispatcher_context.get()
+
+    def navigate(new_path: str):
+        if hasattr(dispatcher, "navigate"):
+            dispatcher.navigate(new_path)
+        else:
+            raise RuntimeError("Navigation failed: No Router found.")
+
+    return navigate

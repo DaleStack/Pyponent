@@ -19,26 +19,30 @@ def Router(**props):
 
     if not RouteComponent:
         return div(
-            f"404 - Page {current_path} Not Found", style="color: red; padding: 20px;"
+            f"404 - Page {current_path} Not Found", 
+            style="color: red; padding: 20px;"
         )
 
-    return RouteComponent()
+    return div(
+        RouteComponent(),
+        id="pyponent-router-wrapper",
+        data_pyponent_url=current_path
+    )
 
 
-def Link(**props):
+def Link(*children, **props):
     to = props.get("to", "/")
 
     def on_click(e):
         dispatcher = dispatcher_context.get()
         if hasattr(dispatcher, "navigate"):
-            # Trigger the Router state update!
             dispatcher.navigate(to)
 
-    # We add a special data attribute so our JS shell knows to intercept this click
     return a(
-        *props.get("children", []),
+        *children,   
         href=to,
         onClick=on_click,
         data_pyponent_link="true",
-        **{k: v for k, v in props.items() if k not in ["to", "children", "onClick"]},
+        # Removed "children" from the exclusion list since it's no longer in props
+        **{k: v for k, v in props.items() if k not in ["to", "onClick"]},
     )
