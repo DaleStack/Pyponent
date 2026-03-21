@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+
+.env
+
 *.db
 
 test.py
@@ -17,3 +20,4 @@ test.py
 # Documentation
 docs/
 mkdocs.yml
+building.txt

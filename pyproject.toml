@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyponent"
-version = "0.1.0"
+version = "0.1.1"
 description = "A blazing-fast, Server-Driven UI framework for Python using FastAPI and WebSockets."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 
 authors = [
     { name = "Casey Dale Siatong", email = "daledev07@gmail.com" }, 
