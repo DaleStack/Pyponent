@@ -70,7 +70,7 @@ HTML_SHELL_TEMPLATE = """\
     <body>
         <div id="root">{initial_html}</div>
         <script>
-            const ws = new WebSocket("ws://" + window.location.host + "/ws");
+            const ws = new WebSocket("ws://" + window.location.host + "/ws?path=" + encodeURIComponent(window.location.pathname));
 
             ws.onmessage = function(event) {
                 const payload = JSON.parse(event.data);
@@ -234,13 +234,15 @@ def setup_pyponent(
         dispatcher_context.set(user_dispatcher)
         latest_resolved_vdom = None
 
+        client_path = websocket.query_params.get("path", "/")
+
         loop = asyncio.get_running_loop()
         ctx = contextvars.copy_context()
 
         def sync_render():
             nonlocal latest_resolved_vdom
 
-            root_vnode = VNode(tag=root_component)
+            root_vnode = VNode(tag=root_component, props={"initial_path": client_path})
             new_vdom = resolve_vdom(root_vnode)
 
             if latest_resolved_vdom is None:

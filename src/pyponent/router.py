@@ -20,7 +20,6 @@ def Router(**props):
     if not RouteComponent:
         return div(
             f"404 - Page {current_path} Not Found", 
-            style="color: red; padding: 20px;"
         )
 
     return div(
