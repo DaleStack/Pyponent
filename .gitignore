@@ -18,6 +18,5 @@ test.py
 
 
 # Documentation
-docs/
-mkdocs.yml
+site/
 building.txt
