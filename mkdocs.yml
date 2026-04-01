@@ -1,0 +1,49 @@
+site_name: Pyponent
+site_description: a blazing-fast, Server-Driven UI (SDUI) framework for Python..
+site_author: dalestack
+repo_url: https://github.com/DaleStack/Pyponent
+repo_name: DaleStack/Pyponent
+
+theme:
+  name: material
+  features:
+    - navigation.tabs           # Top level navigation
+    - navigation.sections       # Groups links in the sidebar
+    - content.code.copy         # Adds a copy button to code blocks!
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+# Add syntax highlighting for Python code blocks
+markdown_extensions:
+  - attr_list
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.superfences
+
+# The architecture of your website
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+  - API Reference:
+    - Core Elements: api/html.md
+    - State Management: api/hooks.md
+    - Router: api/router.md
+    - Tailwind: api/tailwind.md
